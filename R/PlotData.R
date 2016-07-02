@@ -30,13 +30,15 @@ plot_freqprof = function(data.freqprof,
                          xAxisUnits = "sec",
                          panel.in   = TRUE,
                          panel.out  = TRUE,
-                         gg         = FALSE,
+                         gg         = TRUE,
                          multiPlot  = FALSE,
                          tick.every = round(length(data.freqprof$data$time) / 31),
-                         label.every = 3) {
+                         label.every = 3, 
+                         title = "Frequency Profile") {
   
   # Extract relevant data from data.freqprof
   res      <- data.freqprof$data
+  observations <- nrow(data.freqprof$raw.data)
   panels   <- res$panels
   res      <- res[, -2]
   freqprof <- res[, -1]
@@ -46,6 +48,11 @@ plot_freqprof = function(data.freqprof,
   step       <- data.freqprof$step
   resolution <- data.freqprof$resolution
   type       <- data.freqprof$type
+  
+  # being able to custom title
+  if(is.null(title)) {
+    title <- paste("Frequency Profile")
+  }
   
   # Panels limits
   x.panel.left  <- max(which(data.freqprof$data$panels == 1)) * resolution
@@ -79,7 +86,11 @@ plot_freqprof = function(data.freqprof,
                    xmin        = xmin,
                    xmax        = xmax,
                    tick.every  = tick.every,
-                   label.every = label.every)
+                   label.every = label.every,
+                   window = window, 
+                   title = title, 
+                   observations = observations
+                   )
     
     if(panel.in) {
       p = p + geom_vline(xintercept = x.panel.left)
@@ -207,44 +218,57 @@ ggplot_fp <- function(data1,
                       xmin        = xmin,
                       xmax        = xmax,
                       tick.every  = tick.every,
-                      label.every = label.every) {
+                      label.every = label.every,
+                      window = window,
+                      title = title, 
+                      observations = observations) {
   
   p <- with(data1, {
      ggplot(data1,
             aes(x      = time, 
                 y      = value,
                 color  = variable, 
-                group  = variable)) +
+                group  = variable), 
+            stat = "identity", position = "stack") +
       geom_line(size = 0.8) +
-      labs(title = "Frequency Profile") +
-      xlab(paste('Time (', resolution * step, ' ', xAxisUnits, ')', sep = "")) + 
+      labs(title = paste(title)) +
+      xlab(paste('Window Bin', sep = "")) + 
       ylab(paste(yAxis)) +
-      scale_x_continuous(limits       = c(xmin, xmax),
+      scale_x_continuous(limits       = c(xmin, xmax), expand = c(0,0),
                         minor_breaks = round(seq(xmin, xmax, by = tick.every)),
                         breaks       = round(seq(xmin, xmax,
                                              by = tick.every * label.every))) +
-      scale_color_discrete(name = "Behavior") +
-      theme(title = element_text(size = 17, face = "bold"),
-            axis.text.x  = element_text(size   = 12,
-                                        color  = "#3f3f3f",
-                                        margin = margin(t = 0.4, unit = "cm")),
-            axis.text.y  = element_text(size   = 12, 
-                                        color  = "#3f3f3f",
-                                        margin = margin(r = 0.4, unit = "cm")),
-            axis.title.x = element_text(size   = 14, 
-                                        face   = "bold",
-                                        margin = margin(t = 0.4, unit = "cm")),
-            axis.title.y = element_text(size   = 14, 
-                                        face   = "bold",
-                                        margin = margin(r = 0.4, unit = "cm")),
-            legend.text       = element_text(size   = 12),
-            panel.background  = element_rect(fill   = "#f6f6f6"),
-            panel.grid.major  = element_line(color  = "#e9e9e9"),
-            panel.grid.minor  = element_line(color  = "#e9e9e9"),
-            axis.line         = element_line(color  = "#a8a8a8"),
+      scale_y_continuous(limits = c(0,100), expand = c (0, 1))+
+      scale_color_discrete(name = paste0("Data", "\n","\n",
+                                         "Observations", paste(c(rep(" ", 0)), sep = "", collapse = ""), " = ", observations, "\n",
+                                         paste(c(rep("-", 30)), sep = "", collapse = ""),"\n",
+                                         "Parameters", "\n", "\n",
+                                         "Window size", paste(c(rep(" ", 1)), sep = "", collapse = ""), " = ", window, "\n",
+                                         "Step size" , paste(c(rep(" ", 7)), sep = "", collapse = ""), " = ",  step, "\n",
+                                         "Resolution" , paste(c(rep(" ", 5)), sep = "", collapse = ""), " = ", resolution, "\n",
+                                         paste(c(rep("-", 30)), sep = "", collapse = ""),"\n", "Legend")) +  # Title of the Legend
+      theme_bw() +
+      theme(plot.title = element_text(size = 17),
+            # Legend
+            legend.text       = element_text(size = 12, colour = "black"),
+            legend.title     = element_text(size = 12, colour = "black"),
+            legend.key         = element_rect(color = "white"),
+            legend.key.size = unit(1, "cm"),
+            legend.position=c(1,1.02), 
+            legend.justification=c(0, 1), 
+            plot.margin = unit(c(1, 10, 0.5, 0.5), "lines"),
+            legend.background = element_rect(fill = "white", colour = "#999999", linetype = "solid", size = 0.5),
+            # Axis ticks (inside the plot)
+            axis.text.x  = element_text(margin = margin(t = 0.4, unit = "cm")),
+            axis.text.y  = element_text(margin = margin(r = 0.4, unit = "cm")),
+            axis.title.x = element_text(margin = margin(t = 0.4, unit = "cm")),
+            axis.title.y = element_text(margin = margin(r = 0.4, unit = "cm")),
             axis.ticks        = element_line(color  = "black", size = 0.5),
-            axis.ticks.length = unit(-0.2, "cm")) +
-      theme_bw()
+            axis.ticks.length = unit(-0.2, "cm")
+            )
   })
+
   return(p)
+  
 }
+ 
