@@ -1,9 +1,9 @@
 library(shiny)
 
 shinyServer(function(input, output, session) {
-
+  
   getDataFromShiny = function(inFile){
-
+    
     if (is.null(inFile)){
       filename = "S58-1-1.bin"
       filepath = "../extdata/S58-1-1.bin"
@@ -11,72 +11,88 @@ shinyServer(function(input, output, session) {
       filename = inFile$name
       filepath = inFile$datapath
     }
-      
+<<<<<<< HEAD
 
+=======
+    
+    
+>>>>>>> 473b9972601d5effc8a5bbc948e9abda378f67c1
     # reading a file, whose extension is either csv, bin or fpw,
     # and importing it as a data.frame
     
-
+    
     file.extension = tolower(substr(filename,nchar(filename)-2,nchar(filename)))
-
+    library(FreqProf)
     data.behavior = switch(file.extension,
                            csv = read.csv(filepath),
                            bin = read.bin(filepath),
                            fpw = read.fpw(filepath))
-
+    
     if(is.null(data.behavior)) stop("file extension must be either csv, fpw, or bin")
-
+    
     # update selected behaviors
-    updateCheckboxGroupInput(session, "selected.behaviors",
-                             choices = names(data.behavior),
-                             selected = input$selected.behaviors)
+    if(is.null(input$selected.behaviors)){
+      
+      
+      updateCheckboxGroupInput(session, "selected.behaviors",
+                               choices = names(data.behavior),
+                               selected = c(names(data.behavior)))
+    }else{
+      updateCheckboxGroupInput(session, "selected.behaviors",
+                               choices = names(data.behavior),
+                               selected = input$selected.behaviors)
+    }
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 473b9972601d5effc8a5bbc948e9abda378f67c1
     data.behavior = data.behavior[,names(data.behavior) %in% input$selected.behaviors]
-
+    
     if(is.null(ncol(data.behavior))){
       # this means that only one behavior is selected
       dat = as.data.frame(data.behavior)
       names(dat) = input$selected.behaviors
       return(dat)
     }
-
+    
     if(ncol(data.behavior)>1) return(data.behavior)
-
+    
     return(NULL)
   }
-
+  
   getWindowLength = function(unit,window,data){
     if(unit == "bins")
       return(window)
     else
       return(round(window/100*nrow(data)))
   }
-
+  
   output$distPlot <- renderPlot({
     data.behavior = getDataFromShiny(input$file)
     if(is.null(data.behavior)) return(NULL)
-
+    
     data.freqprof = freqprof(data.behavior,
                              window = getWindowLength(input$unit_length,input$window,data.behavior),
                              step = input$step,
                              resolution = input$resolution,
                              which = input$which)
-
+    
     # plotting
     plot_freqprof(data.freqprof,
-         gg=input$ggplot,
-         panel.in = input$panel.in,
-         panel.out = input$panel.out,
-         multiPlot = input$multiplot,
-         xAxisUnits = input$units,
-         tick.every = input$tick.every,
-         label.every = input$label.every)
+                  gg=input$ggplot,
+                  panel.in = input$panel.in,
+                  panel.out = input$panel.out,
+                  multiPlot = input$multiplot,
+                  xAxisUnits = input$units,
+                  tick.every = input$tick.every,
+                  label.every = input$label.every)
   })
-
+  
   observe({
     data.behavior = getDataFromShiny(input$file)
     if(is.null(data.behavior)) return(NULL)
-
+    
     # update range for window length
     if(input$unit_length == "bins"){
       win = round(.25*nrow(data.behavior))
@@ -87,7 +103,7 @@ shinyServer(function(input, output, session) {
       updateSliderInput(session, "window", value = 25,
                         min = 1, max = 100, step = 1)
     }
-
+    
     # update tick.every and label.every
     t.every = round(nrow(data.behavior)/31)
     updateSliderInput(session, "tick.every", value = t.every,
@@ -95,28 +111,28 @@ shinyServer(function(input, output, session) {
     updateSliderInput(session, "label.every", value = 3,
                       min = 1, max = 100, step = 1)
   })
-
+  
   output$downloadData <- downloadHandler(
     filename = "freqprof.csv",
     content = function(file) {
       data.behavior = getDataFromShiny(input$file)
       if(is.null(data.behavior)) return(NULL)
-
+      
       data.freqprof = freqprof(data.behavior,
                                window = input$window,
                                step = input$step,
                                resolution = input$resolution,
                                which = input$which)
-
+      
       # which panels will be downloaded?
       panels = c(2)
       if(input$panel.in) panels = c(1,panels)
       if(input$panel.out) panels = c(panels,3)
-
+      
       write.csv(data.freqprof$data[ data.freqprof$data$panels %in% panels, ], file,row.names=F)
     }
   )
-
+  
   output$downloadPlotPDF <- downloadHandler(
     filename = function() { paste0("ShinyPlot.pdf") },
     content = function(file) {
@@ -134,11 +150,11 @@ shinyServer(function(input, output, session) {
                     multiPlot = input$multiplot,
                     xAxisUnits = input$units)
       dev.off()
-
+      
       if (file.exists(paste0(file, ".pdf")))
         file.rename(paste0(file, ".pdf"), file)
     })
-
+  
   output$downloadPlotPNG <- downloadHandler(
     filename = function() { paste0("ShinyPlot.png") },
     content = function(file) {
@@ -156,11 +172,11 @@ shinyServer(function(input, output, session) {
                     multiPlot = input$multiplot,
                     xAxisUnits = input$units)
       dev.off()
-
+      
       if (file.exists(paste0(file, ".png")))
         file.rename(paste0(file, ".png"), file)
     })
-
+  
 })
 
 

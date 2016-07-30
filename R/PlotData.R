@@ -50,6 +50,10 @@ plot_freqprof = function(data.freqprof,
   resolution <- data.freqprof$resolution
   type       <- data.freqprof$type
   
+  colMax <- function(data) sapply(data, max, na.rm = TRUE)
+  y_val<- res[,3:ncol(res)]
+  y_limit = max(colMax(y_val))
+  
   # being able to custom title
   if(is.null(title)) {
     title <- paste("Frequency Profile")
@@ -68,8 +72,12 @@ plot_freqprof = function(data.freqprof,
     yAxis = switch(type,
                    sum        = 'Moving sum',
                    proportion = 'Moving proportion')
+    # y_expand_low = switch(type,
+    #                   sum = -0.5
+    #                   proportion = -0.1)
   }
-  
+
+
   # Color-blind friendly palette
   cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", 
                   "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -88,19 +96,21 @@ plot_freqprof = function(data.freqprof,
                    xmax        = xmax,
                    tick.every  = tick.every,
                    label.every = label.every,
+                   # type = type,
                    window = window, 
                    title = title, 
-                   observations = observations
+                   observations = observations,
+                   y_limit = y_limit
                    )
-    
+
     if(panel.in) {
       p = p + geom_vline(xintercept = x.panel.left)
     }
-    
+
     if(panel.out) {
-      p = p + geom_vline(xintercept = x.panel.right) 
+      p = p + geom_vline(xintercept = x.panel.right)
     }
-    
+
     if (multiPlot) {
       p = p + facet_grid(variable ~ .) + theme(legend.position = "none")
     }
@@ -225,7 +235,8 @@ ggplot_fp <- function(data1,
                       label.every = label.every,
                       window = window,
                       title = title, 
-                      observations = observations) {
+                      observations = observations,
+                      y_limit = y_limit) {
   
   p <- with(data1, {
      ggplot(data1,
@@ -242,12 +253,19 @@ ggplot_fp <- function(data1,
                         minor_breaks = round(seq(xmin, xmax, by = tick.every)),
                         breaks       = round(seq(xmin, xmax,
                                              by = tick.every * label.every))) +
-      scale_y_continuous(limits = c(0,100), expand = c (0, 1))+
+
+  
+
+        scale_y_continuous(limits = c(-0.03*y_limit,1*y_limit), expand = c (-0.58, 0.7*y_limit)
+                           # minor_breaks = round(seq(ymin, ymax)),
+                           # breaks = round(seq(ymin, ymax))
+                           ) +
+   
       scale_color_discrete(name = paste0("Data", "\n","\n",
                                          "Observations", paste(c(rep(" ", 0)), sep = "", collapse = ""), " = ", observations, "\n",
                                          paste(c(rep("-", 30)), sep = "", collapse = ""),"\n",
                                          "Parameters", "\n", "\n",
-                                         "Window size", paste(c(rep(" ", 1)), sep = "", collapse = ""), " = ", window, "\n",
+                                         "Window size", paste(c(rep(" ", 1)), sep = "", collapse = ""), " = ", round(window*0.033),"sec", "\n",
                                          "Step size" , paste(c(rep(" ", 7)), sep = "", collapse = ""), " = ",  step, "\n",
                                          "Resolution" , paste(c(rep(" ", 5)), sep = "", collapse = ""), " = ", resolution, "\n",
                                          paste(c(rep("-", 30)), sep = "", collapse = ""),"\n", "Legend")) +  # Title of the Legend
