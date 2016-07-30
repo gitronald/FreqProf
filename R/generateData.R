@@ -1,4 +1,4 @@
-#' Generate a sequence of dates
+#' Generate a Sequence of Dates
 #' 
 #' @param startDate a character string in the format "YYYY-MM-DD"
 #' @param nDays length of output vector
@@ -20,7 +20,7 @@ return(data1)
 }
 
 
-#' Title
+#' Generate Random Binary Vectors
 #'
 #' @param nBehaviors number of columns to generate
 #' @param nrow bumber of rows to generate
